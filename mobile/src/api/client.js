@@ -4,7 +4,7 @@ import * as SecureStore from 'expo-secure-store';
 // NEXUS-WEBSITE backend (porta 3000)
 // Em emulador Android: http://10.0.2.2:3000
 // Em dispositivo físico: http://SEU_IP_LOCAL:3000
-const BASE_URL = 'http://localhost:3000';
+const BASE_URL = 'http://192.168.100.15:3000';
 
 const api = axios.create({
   baseURL: BASE_URL,
