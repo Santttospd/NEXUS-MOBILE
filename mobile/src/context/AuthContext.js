@@ -17,12 +17,29 @@ export function AuthProvider({ children }) {
       const storedToken = await SecureStore.getItemAsync('nexus_token');
       const storedUser = await SecureStore.getItemAsync('nexus_user');
       if (storedToken && storedUser) {
-        setUser(JSON.parse(storedUser));
+        const parsed = JSON.parse(storedUser);
+        setUser(parsed);
+        // Atualiza nomeCondominio em segundo plano sem bloquear a renderização
+        refreshCondominioName(parsed);
       }
     } catch {
       // ignora erro de leitura
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function refreshCondominioName(currentUser) {
+    try {
+      const res = await api.get('/api/configuracoes');
+      const nomeCondominio = res.data?.nome;
+      if (nomeCondominio && nomeCondominio !== currentUser?.nomeCondominio) {
+        const updated = { ...currentUser, nomeCondominio };
+        await SecureStore.setItemAsync('nexus_user', JSON.stringify(updated));
+        setUser(updated);
+      }
+    } catch {
+      // silencia — usa o valor armazenado
     }
   }
 

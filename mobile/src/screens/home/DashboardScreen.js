@@ -102,18 +102,18 @@ export function DashboardScreen({ navigation }) {
       >
         {/* Header */}
         <View style={styles.header}>
-          <View>
+          <View style={styles.headerLeft}>
+            {user?.nomeCondominio && (
+              <Text style={styles.condominioNome}>{user.nomeCondominio}</Text>
+            )}
             <Text style={styles.saudacao}>{saudacao},</Text>
             <Text style={styles.nome}>{primeiroNome}!</Text>
-          </View>
-          {user?.bloco && user?.unidade && (
-            <View style={styles.unidadeBox}>
-              <Ionicons name="home" size={14} color={Colors.white} />
-              <Text style={styles.unidade}>
+            {user?.bloco && user?.unidade && (
+              <Text style={styles.unidadeInline}>
                 Bloco {user.bloco} · Ap {user.unidade}
               </Text>
-            </View>
-          )}
+            )}
+          </View>
         </View>
 
         {/* Alertas */}
@@ -173,22 +173,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 28,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
+  },
+  headerLeft: {
+    gap: 2,
+  },
+  condominioNome: {
+    fontSize: 11,
+    color: Colors.accent,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+    marginBottom: 4,
   },
   saudacao: { fontSize: 16, color: 'rgba(255,255,255,0.8)' },
   nome: { fontSize: 26, fontWeight: '800', color: Colors.white },
-  unidadeBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    gap: 4,
+  unidadeInline: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.75)',
+    fontWeight: '500',
+    marginTop: 4,
   },
-  unidade: { fontSize: 12, color: Colors.white, fontWeight: '600' },
   alertBanner: {
     flexDirection: 'row',
     alignItems: 'center',
