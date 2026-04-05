@@ -78,6 +78,14 @@ export function PerfilScreen() {
           </View>
           <Text style={styles.nome}>{dados?.nome || 'Morador'}</Text>
           <Text style={styles.email}>{user?.email}</Text>
+          {(dados?.nomeCondominio || user?.nomeCondominio) && (
+            <View style={styles.condominioBadge}>
+              <Ionicons name="business-outline" size={13} color={Colors.accent} />
+              <Text style={styles.condominioText}>
+                {dados?.nomeCondominio || user?.nomeCondominio}
+              </Text>
+            </View>
+          )}
           {dados?.bloco && dados?.unidade && (
             <View style={styles.unidadeBadge}>
               <Ionicons name="home-outline" size={14} color={Colors.primary} />
@@ -150,6 +158,19 @@ const styles = StyleSheet.create({
   avatarText: { fontSize: 28, fontWeight: '900', color: Colors.white },
   nome: { fontSize: 22, fontWeight: '800', color: Colors.text },
   email: { fontSize: 14, color: Colors.textSecondary, marginTop: 2 },
+  condominioBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 8,
+  },
+  condominioText: {
+    fontSize: 12,
+    color: Colors.accent,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
   unidadeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -158,7 +179,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    marginTop: 10,
+    marginTop: 8,
     borderWidth: 1,
     borderColor: Colors.border,
   },
