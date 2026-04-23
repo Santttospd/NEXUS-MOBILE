@@ -7,6 +7,9 @@ const BADGE_CONFIG = {
   PAGA:       { bg: Colors.pagoLight,     text: Colors.pago,     label: 'Paga' },
   PENDENTE:   { bg: Colors.pendenteLight, text: Colors.pendente,  label: 'Pendente' },
   ATRASADA:   { bg: Colors.atrasadoLight, text: Colors.atrasado,  label: 'Atrasada' },
+  PROCESSANDO:{ bg: Colors.infoLight,     text: Colors.info,      label: 'Processando' },
+  ESTORNADA:  { bg: '#f3f4f6',            text: '#6b7280',        label: 'Estornada' },
+  CANCELADA:  { bg: '#f3f4f6',            text: '#6b7280',        label: 'Cancelada' },
 
   // Ocorrência status
   ABERTA:       { bg: Colors.infoLight,    text: Colors.info,    label: 'Aberta' },

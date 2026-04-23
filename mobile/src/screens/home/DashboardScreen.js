@@ -13,6 +13,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Card } from '../../components/Card';
 import { Colors } from '../../constants/colors';
 import api from '../../api/client';
+import { listTaxas } from '../../services/financeiro';
 
 const MODULES = [
   {
@@ -58,11 +59,11 @@ export function DashboardScreen({ navigation }) {
     if (!user?.moradorId && user?.role !== 'ADMIN') return;
     try {
       const [taxasRes, ocorrRes] = await Promise.allSettled([
-        api.get('/api/taxas'),
+        listTaxas(),
         api.get('/api/ocorrencias'),
       ]);
 
-      const taxas = taxasRes.status === 'fulfilled' ? taxasRes.value.data : [];
+      const taxas = taxasRes.status === 'fulfilled' ? taxasRes.value : [];
       const ocorrencias = ocorrRes.status === 'fulfilled' ? ocorrRes.value.data : [];
 
       setAlertas({

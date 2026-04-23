@@ -9,30 +9,23 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../../context/AuthContext';
 import { Badge } from '../../components/Badge';
 import { Loading } from '../../components/Loading';
 import { EmptyState } from '../../components/EmptyState';
 import { Colors } from '../../constants/colors';
-import api from '../../api/client';
+import {
+  listTaxas,
+  getResumoTaxas,
+  formatCurrency,
+  formatDate,
+} from '../../services/financeiro';
 
 const MESES = [
   '', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
 ];
 
-function formatCurrency(value) {
-  return Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
-
-function formatDate(dateStr) {
-  if (!dateStr) return '—';
-  const d = new Date(dateStr);
-  return d.toLocaleDateString('pt-BR');
-}
-
 export function FinanceiroScreen({ navigation }) {
-  const { user } = useAuth();
   const [taxas, setTaxas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -41,8 +34,8 @@ export function FinanceiroScreen({ navigation }) {
   const carregar = useCallback(async () => {
     try {
       setError(null);
-      const res = await api.get('/api/taxas');
-      setTaxas(res.data);
+      const data = await listTaxas();
+      setTaxas(data);
     } catch (err) {
       setError(err.response?.data?.error || 'Erro ao carregar taxas');
     }
@@ -58,12 +51,7 @@ export function FinanceiroScreen({ navigation }) {
     setRefreshing(false);
   }, [carregar]);
 
-  const resumo = {
-    total: taxas.length,
-    pagas: taxas.filter((t) => t.status === 'PAGA').length,
-    pendentes: taxas.filter((t) => t.status === 'PENDENTE').length,
-    atrasadas: taxas.filter((t) => t.status === 'ATRASADA').length,
-  };
+  const resumo = getResumoTaxas(taxas);
 
   if (loading) return <Loading />;
 
@@ -106,10 +94,16 @@ export function FinanceiroScreen({ navigation }) {
               activeOpacity={0.85}
             >
               <View style={styles.taxaLeft}>
-                <Text style={styles.taxaMes}>{MESES[item.mes]} {item.ano}</Text>
+                <Text style={styles.taxaMes}>{MESES[item.mes] || 'Taxa'} {item.ano || ''}</Text>
                 <Text style={styles.taxaVenc}>
                   Venc. {formatDate(item.vencimento)}
                 </Text>
+                {item.asaas?.billingTypeLabel ? (
+                  <Text style={styles.taxaMetodo}>
+                    {item.asaas.billingTypeLabel}
+                    {item.asaas.paymentId ? ' via Asaas' : ''}
+                  </Text>
+                ) : null}
               </View>
               <View style={styles.taxaRight}>
                 <Text style={styles.taxaValor}>{formatCurrency(item.valor)}</Text>
@@ -165,6 +159,7 @@ const styles = StyleSheet.create({
   taxaLeft: { flex: 1 },
   taxaMes: { fontSize: 15, fontWeight: '700', color: Colors.text },
   taxaVenc: { fontSize: 12, color: Colors.textSecondary, marginTop: 2 },
+  taxaMetodo: { fontSize: 12, color: Colors.info, marginTop: 4, fontWeight: '600' },
   taxaRight: { alignItems: 'flex-end', gap: 4 },
   taxaValor: { fontSize: 16, fontWeight: '700', color: Colors.text },
   chevron: { marginLeft: 6 },
