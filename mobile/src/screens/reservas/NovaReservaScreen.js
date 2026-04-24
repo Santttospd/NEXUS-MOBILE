@@ -39,6 +39,35 @@ const PERIODOS = [
   },
 ];
 
+const AREAS_PERMITIDAS = ['SALAO DE FESTAS', 'CHURRASQUEIRA'];
+
+function normalizeAreaName(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toUpperCase();
+}
+
+function isAreaReservavel(area) {
+  const normalized = normalizeAreaName(area?.nome);
+  return AREAS_PERMITIDAS.some((allowed) => normalized.includes(allowed));
+}
+
+function getAreaIconName(areaName) {
+  const normalized = normalizeAreaName(areaName);
+
+  if (normalized.includes('CHURRASQUEIRA')) {
+    return 'flame-outline';
+  }
+
+  if (normalized.includes('SALAO')) {
+    return 'wine-outline';
+  }
+
+  return 'business-outline';
+}
+
 function buildCalendarDays(year, month) {
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -71,7 +100,7 @@ export function NovaReservaScreen({ navigation }) {
 
   useEffect(() => {
     api.get('/api/areas-lazer')
-      .then((res) => setAreas(res.data))
+      .then((res) => setAreas((res.data || []).filter(isAreaReservavel)))
       .catch(() => Alert.alert('Erro', 'Não foi possível carregar áreas de lazer'))
       .finally(() => setLoadingAreas(false));
   }, []);
@@ -123,6 +152,18 @@ export function NovaReservaScreen({ navigation }) {
   // ── Step 1: Escolher área ─────────────────────────────────────
   function renderStep1() {
     if (loadingAreas) return <ActivityIndicator color={Colors.primary} style={{ marginTop: 40 }} />;
+    if (areas.length === 0) {
+      return (
+        <View style={styles.emptyBox}>
+          <Ionicons name="calendar-clear-outline" size={40} color={Colors.textLight} />
+          <Text style={styles.emptyTitle}>Nenhuma área disponível</Text>
+          <Text style={styles.emptyText}>
+            No momento, apenas Salão de Festas e Churrasqueira podem ser reservados.
+          </Text>
+        </View>
+      );
+    }
+
     return (
       <View style={styles.stepContent}>
         <Text style={styles.stepLabel}>Escolha a área de lazer:</Text>
@@ -134,11 +175,7 @@ export function NovaReservaScreen({ navigation }) {
             activeOpacity={0.85}
           >
             <Ionicons
-              name={
-                area.nome.toLowerCase().includes('piscina') ? 'water-outline'
-                  : area.nome.toLowerCase().includes('churrasco') ? 'flame-outline'
-                  : 'business-outline'
-              }
+              name={getAreaIconName(area.nome)}
               size={28}
               color={areaSelecionada?.id === area.id ? Colors.white : Colors.primary}
             />
@@ -436,6 +473,24 @@ const styles = StyleSheet.create({
   stepContent: { gap: 12 },
   stepLabel: { fontSize: 16, fontWeight: '700', color: Colors.text, marginBottom: 4 },
   stepHint: { fontSize: 13, color: Colors.textSecondary, textTransform: 'capitalize' },
+  emptyBox: {
+    backgroundColor: Colors.surface,
+    borderRadius: 14,
+    padding: 24,
+    alignItems: 'center',
+    gap: 10,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.text,
+  },
+  emptyText: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 19,
+  },
   // Área
   areaCard: {
     flexDirection: 'row',
