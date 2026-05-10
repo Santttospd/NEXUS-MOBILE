@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Alert,
   Image,
@@ -7,6 +7,7 @@ import {
   Share,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,7 +16,7 @@ import { Badge } from '../../components/Badge';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { Colors } from '../../constants/colors';
-import { formatCurrency, formatDate } from '../../services/financeiro';
+import { formatCurrency, formatDate, gerarCobranca } from '../../services/financeiro';
 
 const MESES = [
   '', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -37,13 +38,33 @@ function InfoRow({ icon, label, value }) {
 }
 
 export function TaxaDetalheScreen({ route }) {
-  const { taxa } = route.params;
+  const [taxa, setTaxa] = useState(route.params.taxa);
+  const [billingType, setBillingType] = useState('PIX');
+  const [gerando, setGerando] = useState(false);
+  const [geracaoError, setGeracaoError] = useState(null);
+
   const possuiDadosAsaas = Boolean(
     taxa.asaas?.paymentId ||
     taxa.asaas?.pixPayload ||
     taxa.asaas?.bankSlipUrl ||
     taxa.asaas?.invoiceUrl
   );
+
+  async function handleGerarCobranca() {
+    setGerando(true);
+    setGeracaoError(null);
+    try {
+      const updated = await gerarCobranca(Number(taxa.id), billingType);
+      setTaxa(updated);
+    } catch (err) {
+      setGeracaoError(
+        err.response?.data?.error ||
+        'Erro ao gerar cobrança. Verifique se o Asaas está configurado no servidor.'
+      );
+    } finally {
+      setGerando(false);
+    }
+  }
 
   const statusColors = {
     PAGA: { bg: Colors.pagoLight, icon: 'checkmark-circle', color: Colors.pago },
@@ -62,7 +83,7 @@ export function TaxaDetalheScreen({ route }) {
     try {
       const supported = await Linking.canOpenURL(url);
       if (!supported) {
-        Alert.alert('Link indisponivel', 'Nao foi possivel abrir este link no dispositivo.');
+        Alert.alert('Link indisponível', 'Não foi possível abrir este link no dispositivo.');
         return;
       }
 
@@ -80,7 +101,7 @@ export function TaxaDetalheScreen({ route }) {
         message: `Pix copia e cola\n\n${taxa.asaas.pixPayload}`,
       });
     } catch {
-      Alert.alert('Erro ao compartilhar', 'Nao foi possivel compartilhar o codigo Pix.');
+      Alert.alert('Erro ao compartilhar', 'Não foi possível compartilhar o código Pix.');
     }
   }
 
@@ -99,7 +120,7 @@ export function TaxaDetalheScreen({ route }) {
         </View>
 
         <Card style={styles.card}>
-          <Text style={styles.cardTitle}>Detalhes da Cobrança</Text>
+          <Text style={styles.cardTitle}>Detalhes da cobrança</Text>
           <InfoRow
             icon="calendar-outline"
             label="Competência"
@@ -118,42 +139,14 @@ export function TaxaDetalheScreen({ route }) {
             <InfoRow icon="checkmark-circle-outline" label="Pago em" value={formatDate(taxa.pagoEm)} />
           )}
           {taxa.descricao && (
-            <InfoRow icon="document-text-outline" label="Descricao" value={taxa.descricao} />
+            <InfoRow icon="document-text-outline" label="Descrição" value={taxa.descricao} />
           )}
         </Card>
 
-        {possuiDadosAsaas && (
-          <Card style={styles.card}>
-            <Text style={styles.cardTitle}>Integracao Asaas</Text>
-            {taxa.asaas?.paymentId && (
-              <InfoRow icon="link-outline" label="ID da cobranca" value={taxa.asaas.paymentId} />
-            )}
-            {taxa.asaas?.customerId && (
-              <InfoRow icon="person-outline" label="ID do cliente" value={taxa.asaas.customerId} />
-            )}
-            {taxa.asaas?.externalReference && (
-              <InfoRow
-                icon="pricetag-outline"
-                label="Referencia externa"
-                value={taxa.asaas.externalReference}
-              />
-            )}
-            {taxa.asaas?.nossoNumero && (
-              <InfoRow icon="barcode-outline" label="Nosso numero" value={taxa.asaas.nossoNumero} />
-            )}
-            {taxa.statusOriginal && taxa.statusOriginal !== taxa.status && (
-              <InfoRow
-                icon="swap-horizontal-outline"
-                label="Status original"
-                value={taxa.statusOriginal}
-              />
-            )}
-          </Card>
-        )}
 
         {taxa.asaas?.pixQrCodeImage || taxa.asaas?.pixPayload ? (
           <Card style={styles.card}>
-            <Text style={styles.cardTitle}>Pix</Text>
+            <Text style={styles.cardTitle}>Pagar com Pix</Text>
             {taxa.asaas?.pixQrCodeImage ? (
               <Image
                 source={{ uri: taxa.asaas.pixQrCodeImage }}
@@ -173,14 +166,14 @@ export function TaxaDetalheScreen({ route }) {
 
             {taxa.asaas?.pixPayload ? (
               <View style={styles.codeBox}>
-                <Text style={styles.codeLabel}>Codigo copia e cola</Text>
+                <Text style={styles.codeLabel}>Código copia e cola</Text>
                 <Text style={styles.codeValue}>{taxa.asaas.pixPayload}</Text>
               </View>
             ) : null}
 
             {taxa.asaas?.pixPayload ? (
               <Button
-                title="Compartilhar codigo Pix"
+                title="Compartilhar código Pix"
                 onPress={sharePixPayload}
                 style={styles.actionButton}
               />
@@ -190,19 +183,19 @@ export function TaxaDetalheScreen({ route }) {
 
         {taxa.asaas?.invoiceUrl || taxa.asaas?.bankSlipUrl ? (
           <Card style={styles.card}>
-            <Text style={styles.cardTitle}>Acoes de pagamento</Text>
-            {taxa.asaas?.invoiceUrl ? (
-              <Button
-                title="Abrir fatura no Asaas"
-                onPress={() => openExternalUrl(taxa.asaas.invoiceUrl)}
-                style={styles.actionButton}
-              />
-            ) : null}
+            <Text style={styles.cardTitle}>Pagar com Boleto</Text>
             {taxa.asaas?.bankSlipUrl ? (
               <Button
                 title="Abrir boleto"
-                variant="outline"
                 onPress={() => openExternalUrl(taxa.asaas.bankSlipUrl)}
+                style={styles.actionButton}
+              />
+            ) : null}
+            {taxa.asaas?.invoiceUrl ? (
+              <Button
+                title="Ver fatura completa"
+                variant="outline"
+                onPress={() => openExternalUrl(taxa.asaas.invoiceUrl)}
                 style={styles.actionButton}
               />
             ) : null}
@@ -222,18 +215,62 @@ export function TaxaDetalheScreen({ route }) {
           <View style={styles.avisoBox}>
             <Ionicons name="warning-outline" size={20} color={Colors.atrasado} />
             <Text style={styles.avisoText}>
-              Esta taxa esta em atraso. Entre em contato com a administracao para regularizar sua situacao.
+              Esta taxa está em atraso. Entre em contato com a administração para regularizar sua situação.
             </Text>
           </View>
         )}
 
         {!possuiDadosAsaas && ['PENDENTE', 'ATRASADA'].includes(taxa.status) && (
-          <View style={[styles.avisoBox, styles.warningBox]}>
-            <Ionicons name="wallet-outline" size={20} color={Colors.warning} />
-            <Text style={[styles.avisoText, styles.warningText]}>
-              O app ainda nao recebeu links de pagamento desta cobranca. Para usar o Asaas aqui, o backend precisa enviar os dados da fatura, boleto ou Pix.
-            </Text>
-          </View>
+          <Card style={styles.card}>
+            <Text style={styles.cardTitle}>Como deseja pagar?</Text>
+
+            <View style={styles.billingRow}>
+              <TouchableOpacity
+                style={[styles.billingBtn, billingType === 'PIX' && styles.billingBtnActive]}
+                onPress={() => setBillingType('PIX')}
+                activeOpacity={0.8}
+              >
+                <Ionicons
+                  name="qr-code-outline"
+                  size={20}
+                  color={billingType === 'PIX' ? Colors.white : Colors.primary}
+                />
+                <Text style={[styles.billingLabel, billingType === 'PIX' && styles.billingLabelActive]}>
+                  Pix
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.billingBtn, billingType === 'BOLETO' && styles.billingBtnActive]}
+                onPress={() => setBillingType('BOLETO')}
+                activeOpacity={0.8}
+              >
+                <Ionicons
+                  name="barcode-outline"
+                  size={20}
+                  color={billingType === 'BOLETO' ? Colors.white : Colors.primary}
+                />
+                <Text style={[styles.billingLabel, billingType === 'BOLETO' && styles.billingLabelActive]}>
+                  Boleto
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {geracaoError ? (
+              <View style={[styles.avisoBox, styles.warningBox, { marginBottom: 12 }]}>
+                <Ionicons name="warning-outline" size={16} color={Colors.warning} />
+                <Text style={[styles.avisoText, styles.warningText, { fontSize: 12 }]}>
+                  {geracaoError}
+                </Text>
+              </View>
+            ) : null}
+
+            <Button
+              title={billingType === 'PIX' ? 'Pagar com Pix' : 'Pagar com Boleto'}
+              onPress={handleGerarCobranca}
+              loading={gerando}
+            />
+          </Card>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -298,6 +335,22 @@ const styles = StyleSheet.create({
   actionButton: {
     marginTop: 8,
   },
+  billingRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
+  billingBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: Colors.primary,
+    backgroundColor: Colors.surface,
+  },
+  billingBtnActive: { backgroundColor: Colors.primary },
+  billingLabel: { fontSize: 15, fontWeight: '700', color: Colors.primary },
+  billingLabelActive: { color: Colors.white },
   avisoBox: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: Colors.dangerLight, borderRadius: 12, padding: 14 },
   infoBox: { backgroundColor: Colors.infoLight },
   warningBox: { backgroundColor: Colors.warningLight },
