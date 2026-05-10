@@ -39,19 +39,12 @@ const PERIODOS = [
   },
 ];
 
-const AREAS_PERMITIDAS = ['SALAO DE FESTAS', 'CHURRASQUEIRA'];
-
 function normalizeAreaName(value) {
   return String(value || '')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .trim()
     .toUpperCase();
-}
-
-function isAreaReservavel(area) {
-  const normalized = normalizeAreaName(area?.nome);
-  return AREAS_PERMITIDAS.some((allowed) => normalized.includes(allowed));
 }
 
 function getAreaIconName(areaName) {
@@ -100,7 +93,7 @@ export function NovaReservaScreen({ navigation }) {
 
   useEffect(() => {
     api.get('/api/areas-lazer')
-      .then((res) => setAreas((res.data || []).filter(isAreaReservavel)))
+      .then((res) => setAreas(res.data || []))
       .catch(() => Alert.alert('Erro', 'Não foi possível carregar áreas de lazer'))
       .finally(() => setLoadingAreas(false));
   }, []);

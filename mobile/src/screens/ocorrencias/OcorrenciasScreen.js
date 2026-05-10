@@ -15,6 +15,7 @@ import { Loading } from '../../components/Loading';
 import { EmptyState } from '../../components/EmptyState';
 import { Colors } from '../../constants/colors';
 import api from '../../api/client';
+import { formatDate } from '../../services/financeiro';
 
 const FILTROS = [
   { key: null, label: 'Todas' },
@@ -23,10 +24,6 @@ const FILTROS = [
   { key: 'EM_ANDAMENTO', label: 'Em Andamento' },
   { key: 'RESOLVIDA', label: 'Resolvidas' },
 ];
-
-function formatDate(dateStr) {
-  return new Date(dateStr).toLocaleDateString('pt-BR');
-}
 
 export function OcorrenciasScreen({ navigation }) {
   const [ocorrencias, setOcorrencias] = useState([]);
@@ -67,7 +64,7 @@ export function OcorrenciasScreen({ navigation }) {
             <TouchableOpacity
               key={String(f.key)}
               style={[styles.filtroBtn, filtroAtivo === f.key && styles.filtroAtivo]}
-              onPress={() => { setFiltroAtivo(f.key); setLoading(true); }}
+              onPress={() => setFiltroAtivo(f.key)}
             >
               <Text style={[styles.filtroText, filtroAtivo === f.key && styles.filtroTextAtivo]}>
                 {f.label}
@@ -85,7 +82,7 @@ export function OcorrenciasScreen({ navigation }) {
       ) : (
         <FlatList
           data={ocorrencias}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => String(item.id)}
           contentContainerStyle={ocorrencias.length === 0 ? styles.emptyContainer : styles.list}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           ListEmptyComponent={

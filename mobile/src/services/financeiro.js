@@ -17,8 +17,8 @@ const ASAAS_STATUS_MAP = {
 const BILLING_TYPE_LABELS = {
   PIX: 'Pix',
   BOLETO: 'Boleto',
-  CREDIT_CARD: 'Cartao de credito',
-  DEBIT_CARD: 'Cartao de debito',
+  CREDIT_CARD: 'Cartão de crédito',
+  DEBIT_CARD: 'Cartão de débito',
   UNDEFINED: 'A definir',
 };
 
@@ -94,8 +94,8 @@ function normalizeAsaasDetails(raw) {
       asaas.payload
     ),
     pixQrCodeImage: buildPixImageUri(
-      firstValue(raw.pixEncodedImage, asaas.encodedImage),
-      firstValue(raw.pixQrCodeImage, raw.pixQrCodeUrl, asaas.pixQrCodeImage, asaas.pixQrCodeUrl)
+      firstValue(raw.pixEncodedImage, raw.pixQrCodeImage, asaas.encodedImage),
+      firstValue(raw.pixQrCodeUrl, asaas.pixQrCodeImage, asaas.pixQrCodeUrl)
     ),
     pixExpirationDate: firstValue(
       raw.pixExpirationDate,
@@ -146,6 +146,16 @@ export async function listTaxas() {
   const response = await api.get('/api/taxas');
   const taxas = Array.isArray(response.data) ? response.data : [];
   return taxas.map(normalizeTaxa);
+}
+
+export async function getTaxa(id) {
+  const response = await api.get(`/api/taxas/${id}`);
+  return normalizeTaxa(response.data);
+}
+
+export async function gerarCobranca(taxaId, billingType = 'PIX') {
+  await api.post(`/api/pagamentos/asaas/taxas/${taxaId}/cobranca`, { billingType });
+  return getTaxa(taxaId);
 }
 
 export function getResumoTaxas(taxas = []) {
