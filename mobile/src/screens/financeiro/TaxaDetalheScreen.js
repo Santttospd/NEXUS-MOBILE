@@ -184,14 +184,12 @@ export function TaxaDetalheScreen({ route }) {
         {taxa.asaas?.invoiceUrl || taxa.asaas?.bankSlipUrl ? (
           <Card style={styles.card}>
             <Text style={styles.cardTitle}>Pagar com Boleto</Text>
-            {taxa.asaas?.bankSlipUrl ? (
-              <Button
-                title="Abrir boleto"
-                onPress={() => openExternalUrl(taxa.asaas.bankSlipUrl)}
-                style={styles.actionButton}
-              />
-            ) : null}
-            {taxa.asaas?.invoiceUrl ? (
+            <Button
+              title="Abrir boleto"
+              onPress={() => openExternalUrl(taxa.asaas.bankSlipUrl || taxa.asaas.invoiceUrl)}
+              style={styles.actionButton}
+            />
+            {taxa.asaas?.bankSlipUrl && taxa.asaas?.invoiceUrl ? (
               <Button
                 title="Ver fatura completa"
                 variant="outline"

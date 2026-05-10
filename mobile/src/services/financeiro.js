@@ -154,8 +154,28 @@ export async function getTaxa(id) {
 }
 
 export async function gerarCobranca(taxaId, billingType = 'PIX') {
-  await api.post(`/api/pagamentos/asaas/taxas/${taxaId}/cobranca`, { billingType });
-  return getTaxa(taxaId);
+  const { data: charge } = await api.post(
+    `/api/pagamentos/asaas/taxas/${taxaId}/cobranca`,
+    { billingType }
+  );
+
+  const taxa = await getTaxa(taxaId);
+
+  // Mescla dados da resposta da criação como fallback caso o DB ainda não reflita tudo
+  const asaas = {
+    ...taxa.asaas,
+    invoiceUrl: taxa.asaas.invoiceUrl || charge.payment?.invoiceUrl || null,
+    bankSlipUrl: taxa.asaas.bankSlipUrl || charge.payment?.bankSlipUrl || charge.payment?.invoiceUrl || null,
+    pixPayload: taxa.asaas.pixPayload || charge.pixQrCode?.payload || null,
+    pixQrCodeImage:
+      taxa.asaas.pixQrCodeImage ||
+      (charge.pixQrCode?.encodedImage
+        ? `data:image/png;base64,${charge.pixQrCode.encodedImage}`
+        : null),
+    pixExpirationDate: taxa.asaas.pixExpirationDate || charge.pixQrCode?.expirationDate || null,
+  };
+
+  return { ...taxa, asaas };
 }
 
 export function getResumoTaxas(taxas = []) {
