@@ -39,6 +39,9 @@ export function LoginScreen() {
       // AppNavigator detecta o user e redireciona automaticamente
     } catch (err) {
       const msg =
+        err.message === 'morador_required'
+          ? 'Use uma conta de morador para acessar o aplicativo'
+          :
         err.response?.data?.error ||
         (err.request ? 'Não foi possível conectar ao servidor' : 'Erro inesperado');
       Alert.alert('Falha no login', msg);
