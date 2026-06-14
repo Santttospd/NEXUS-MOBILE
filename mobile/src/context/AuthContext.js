@@ -47,8 +47,12 @@ export function AuthProvider({ children }) {
   }
 
   async function signIn(email, password) {
-    const response = await api.post('/api/auth/login', { email, password });
+    const response = await api.post('/api/auth/login', { email, password, portal: 'morador' });
     const { token, refreshToken, user: userData } = response.data;
+
+    if (userData.role !== 'MORADOR' && userData.accessLevel !== 'MORADOR') {
+      throw new Error('morador_required');
+    }
 
     await SecureStore.setItemAsync('nexus_token', token);
     await SecureStore.setItemAsync('nexus_user', JSON.stringify(userData));

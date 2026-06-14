@@ -3,7 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 
 // EXPO_PUBLIC_API_URL é injetado pelo Metro via .env (requer expo start --clear após mudanças)
 // Fallback garante funcionamento mesmo se a variável não for injetada
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.100.16:3000';
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.201:3000';
 
 const api = axios.create({
   baseURL: BASE_URL,
